@@ -201,7 +201,10 @@ class App
         $input = new CommandCall($argv);
 
         if (count($input->args) < 2) {
-            $this->printSignature();
+            $localArgv = $input->args;
+            $localArgv[] = 'help';
+
+            $this->runCommand($localArgv);
 
             return;
         }
