@@ -45,64 +45,23 @@ class HelpCommand implements IsRegisterableCommand
 
     function formatCommands(array $commands)
     {
-        // Step 1: Build the full command (name + signature if available)
-        $fullCommands = [];
-        foreach ($commands as $item) {
+        $formattedCommands = array_map(function ($item) {
             [$name, $signature, $description] = $item;
-            $fullCommands[] = $signature ? "$name $signature" : $name;
-        }
+            return [$signature ? "$name $signature" : $name, $description];
+        }, $commands);
 
-        // Step 2: Find the maximum length among commands
-        //         that are <= 40 chars AND have a description.
-        $maxLenWithDesc = 0;
-        foreach ($commands as $index => [$name, $signature, $description]) {
-            $fullCommand = $fullCommands[$index];
-            if ($description !== null) {
-                $length = strlen($fullCommand);
-                if ($length <= 40 && $length > $maxLenWithDesc) {
-                    $maxLenWithDesc = $length;
-                }
-            }
-        }
+        $maxLen = max(array_map('strlen', array_column($formattedCommands, 0)));
+        $dashColumn = min(42, $maxLen + 2);
 
-        $dashColumn = min(42, $maxLenWithDesc + 2);
-
-        // Step 3: Output each command according to the rules
-        foreach ($commands as $index => [$name, $signature, $description]) {
-            $fullCommand = $fullCommands[$index];
-            $length = strlen($fullCommand);
-
-            // If no description, just print the command
+        foreach ($formattedCommands as [$command, $description]) {
             if ($description === null) {
-                // Fits within 80 chars requirement automatically, unless your command is huge
-                echo $fullCommand, PHP_EOL;
-                continue;
-            }
-
-            // If the command is longer than 40 chars, put description on next line
-            if ($length > 40) {
-                echo $fullCommand, PHP_EOL;            // Print command alone
-                echo str_repeat(' ', 4), '— ', $description, PHP_EOL; // Indented description
+                echo $command . "\n";
+            } elseif (strlen($command) > 40) {
+                echo $command . "\n";
+                echo str_repeat(' ', 4) . '— ' . $description . "\n";
             } else {
-                // Align dash at $dashColumn
-                // Number of spaces = ($dashColumn) - (current position after command)
-                // Current position after command = $length + 1 (since we start at col 1)
-                $spaces = $dashColumn - ($length + 1);
-                if ($spaces < 1) {
-                    $spaces = 1;  // Ensure at least one space if something odd happens
-                }
-
-                // Construct the line
-                $line = $fullCommand
-                    . str_repeat(' ', $spaces)
-                    . '— '
-                    . $description;
-
-                // (Optional) Check if longer than 80 chars – no explicit wrapping below,
-                // but you could implement logic here if you wish:
-                // if (strlen($line) > 80) { ...wrap logic... }
-
-                echo $line, PHP_EOL;
+                $spaces = max(1, $dashColumn - strlen($command) - 1);
+                echo $command . str_repeat(' ', $spaces) . '— ' . $description . "\n";
             }
         }
     }
