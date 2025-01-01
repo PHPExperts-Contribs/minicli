@@ -26,15 +26,6 @@ class HelpCommand implements IsRegisterableCommand
         $app->registerCommand('help', function () use ($app) {
             $app->success($app->me . ' [required] <optional> - Description' , false);
 
-            $this->knownCommands = [
-                ['app help', null, 'Lists the available commands.'],
-                ['app help2', null, null],
-                ['app version', null, "Shows the current app's version"],
-                ['app new', null, null],
-                ['app deploy', '--force', "Force deploy the application"],
-                ['app rollback', '--target <version>', null],
-            ];
-
             $this->formatCommands($this->knownCommands);
 
             if (is_callable($this->customCode)) {
@@ -43,7 +34,7 @@ class HelpCommand implements IsRegisterableCommand
         });
     }
 
-    function formatCommands(array $commands)
+    protected function formatCommands(array $commands)
     {
         $formattedCommands = array_map(function ($item) {
             [$name, $signature, $description] = $item;
@@ -77,14 +68,3 @@ class HelpCommand implements IsRegisterableCommand
         $this->knownCommands[] = [$name, $signature, $description];
     }
 }
-
-
-/**
-app help                         — Lists the available commands.
-app help2
-app version                      — Shows the current app's version
-app new
-app deploy --force               — Force deploy the application
-app rollback --target <version>
-
- */
