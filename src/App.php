@@ -14,6 +14,7 @@ use Minicli\Exception\MissingParametersException;
 use Minicli\Logging\Logger;
 use Minicli\Output\Helper\ThemeHelper;
 use Minicli\Output\OutputHandler;
+use Minicli\PrebuiltCommands\PrebuiltCommander;
 use ReflectionException;
 use Throwable;
 
@@ -37,6 +38,8 @@ class App
 
     public readonly string $me;
 
+    public readonly PrebuiltCommander $prebuilt;
+
     /**
      * @param  array<string, mixed>  $config
      *
@@ -53,6 +56,8 @@ class App
         $this->boot($config, $signature);
 
         $this->me = $this->findBinFileName();
+
+        $this->prebuilt = new PrebuiltCommander($this);
     }
 
     /**
@@ -168,9 +173,12 @@ class App
         $this->addService('printer', $output);
     }
 
-    public function registerCommand(string $name, callable $callable): void
+    public function registerCommand(string $name, callable $callable, string $signature = '', ?string $description = null): void
     {
         $this->commandRegistry->registerCommand($name, $callable);
+        if ($name !== 'help') {
+            $this->prebuilt->help->addCommandListing($name, $signature, $description);
+        }
     }
 
     /**
@@ -193,7 +201,10 @@ class App
         $input = new CommandCall($argv);
 
         if (count($input->args) < 2) {
-            $this->printSignature();
+            $localArgv = $input->args;
+            $localArgv[] = 'help';
+
+            $this->runCommand($localArgv);
 
             return;
         }
